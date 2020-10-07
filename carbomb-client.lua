@@ -1,3 +1,12 @@
+QBCore = nil
+
+Citizen.CreateThread(function()
+    while QBCore == nil do
+        TriggerEvent('QBCore:GetObject', function(obj) QBCore = obj end)
+        Citizen.Wait(200)
+    end
+end)
+
 local timer = 0
 local armedVeh
 local ped = GetPlayerPed(-1)
@@ -14,54 +23,29 @@ AddEventHandler('RNG_CarBomb:CheckIfRequirementsAreMet', function()
 
     if not IsPedInAnyVehicle(ped, false) then
         if veh and (dist < 3.0) then
+            TriggerServerEvent('RNG_CarBomb:RemoveBombFromInv')
             loadAnimDict(animDict)
             Citizen.Wait(1000)
             TaskPlayAnim(ped, animDict, anim, 3.0, 1.0, -1, 0, 1, 0, 0, 0)
-            if Config.ProgressBarType == 0 then
-                return
-            elseif Config.ProgressBarType == 1 then
-                exports['progressBars']:startUI(Config.TimeTakenToArm * 1000, _U('arming'))
-            elseif Config.ProgressBarType == 2 then
-                FastMythticProg(_U('arming'), Config.TimeTakenToArm * 1000)
-            end
-            Citizen.Wait(Config.TimeTakenToArm * 1000)
-            ClearPedTasksImmediately(ped)
-            TriggerServerEvent('RNG_CarBomb:RemoveBombFromInv')
-            
+            QBCore.Functions.Progressbar("arm_car", "Arming car..", Config.TimeTakenToArm * 1000, false, true, {}, {}, {}, {}, function() -- Done
+                Citizen.Wait(Config.TimeTakenToArm * 1000)
+                ClearPedTasksImmediately(ped)
+            end)
+
             if Config.DetonationType == 0 then
-                if Config.UsingMythicNotifications then
-                    TriggerEvent('mythic_notify:client:SendAlert', { type = 'error', text = _U('vanilla', Config.TimeUntilDetonation), length = 5500})
-                else
-                    ShowNotification(_U('vanilla', Config.TimeUntilDetonation))  
-                end
+                QBCore.Functions.Notify("You have armed the car! The vehicle will explode in 10 seconds")
                 RunTimer(veh)
             elseif Config.DetonationType == 1 then
-                if Config.UsingMythicNotifications then
-                    TriggerEvent('mythic_notify:client:SendAlert', { type = 'error', text = _U('speed', Config.maxSpeed, Config.Speed), length = 5500})
-                else
-                    ShowNotification(_U('speed', Config.maxSpeed, Config.Speed)) 
-                end
+                QBCore.Functions.Notify("The vehicle will explode once it reaches 60mph!")
                 armedVeh = veh
             elseif Config.DetonationType == 2 then
-                if Config.UsingMythicNotifications then
-                    TriggerEvent('mythic_notify:client:SendAlert', { type = 'error', text = _U('remote'), length = 5500})
-                else
-                    ShowNotification(_U('remote'))
-                end
+                QBCore.Functions.Notify("You have armed the car! [G] to detonate")
                 armedVeh = veh
             elseif Config.DetonationType == 3 then
-                if Config.UsingMythicNotifications then
-                    TriggerEvent('mythic_notify:client:SendAlert', { type = 'error', text = _U('delayed', Config.TimeUntilDetonation), length = 5500})
-                else
-                    ShowNotification(_U('delayed', Config.TimeUntilDetonation))    
-                end 
+                QBCore.Functions.Notify("You have armed the car! The vehicle will detonate once someone opens the door and timer hits 0")
                 armedVeh = veh 
             elseif Config.DetonationType == 4 then
-                if Config.UsingMythicNotifications then
-                    TriggerEvent('mythic_notify:client:SendAlert', { type = 'error', text = _U('instant'), length = 5500})
-                else
-                    ShowNotification(_U('instant'))    
-                end 
+                QBCore.Functions.Notify("You have armed the car! The vehicle will detonate once someone opens the door")
                 armedVeh = veh
             end 
             
@@ -98,18 +82,10 @@ AddEventHandler('RNG_CarBomb:CheckIfRequirementsAreMet', function()
                 end    
             end
         else
-            if Config.UsingMythicNotifications then
-                TriggerEvent('mythic_notify:client:SendAlert', { type = 'error', text = _U('novehnearby'), length = 5500})
-            else
-                ShowNotification(_U('novehnearby'))    
-            end 
+            QBCore.Functions.Notify("No vehicles nearby!")
         end 
     else
-        if Config.UsingMythicNotifications then
-            TriggerEvent('mythic_notify:client:SendAlert', { type = 'error', text = _U('cantinside'), length = 5500})
-        else
-            ShowNotification(_U('cantinside'))    
-        end 
+        QBCore.Functions.Notify("You cannot arm the bomb while inside a vehicle!")
     end
 end)
 
@@ -137,28 +113,6 @@ function loadAnimDict(dict)
         RequestAnimDict(dict)
         Citizen.Wait(20)
     end
-end
-
-function FastMythticProg(message, time)
-    exports['mythic_progbar']:Progress({
-		name = "tint",
-		duration = time,
-		label = message,
-		useWhileDead = false,
-		canCancel = false,
-		controlDisables = {
-			disableMovement = true,
-			disableCarMovement = true,
-			disableMouse = false,
-			disableCombat = true,
-		},
-	}, function(cancelled)
-        if not cancelled then
-            
-		else
-			Citizen.Wait(1000)
-		end
-	end)
 end
 
 function ShowNotification( text )
