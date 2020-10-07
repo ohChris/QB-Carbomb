@@ -114,9 +114,3 @@ function loadAnimDict(dict)
         Citizen.Wait(20)
     end
 end
-
-function ShowNotification( text )
-    SetNotificationTextEntry( "STRING" )
-    AddTextComponentString( text )
-    DrawNotification( false, false )
-end
