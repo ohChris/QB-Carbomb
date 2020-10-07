@@ -12,5 +12,5 @@ RegisterServerEvent('RNG_CarBomb:RemoveBombFromInv')
 AddEventHandler('RNG_CarBomb:RemoveBombFromInv', function()
     local Player = QBCore.Functions.GetPlayer(source)
 
-    Player.Functions.AddItem('ied', 1)
+    Player.Functions.RemoveItem('ied', 1)
 end)
